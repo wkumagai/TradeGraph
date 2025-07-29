@@ -1,268 +1,327 @@
 # TradeGraph - AIRAS-Trade Pipeline Visualization
 
-This repository contains the graph visualization of AIRAS-Trade, a stock investment research pipeline built with LangGraph.
+This repository contains the hierarchical graph visualization of AIRAS-Trade, a stock investment research pipeline built with LangGraph.
 
-## Pipeline Overview
+## Main Pipeline Graph (High-Level)
 
-AIRAS-Trade is a real-data pipeline that:
-- Retrieves academic papers from ArXiv API
-- Fetches real-time stock prices from Alpha Vantage
-- Generates investment strategies using OpenAI
-- Creates executable backtest code
-- Produces comprehensive analysis reports
-
-## Graph Visualization
-
-### Main Pipeline Graph
+This graph shows the connections between subgraphs:
 
 ```mermaid
 graph TD
-    %% Node Styles
-    classDef startNode fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
+    %% Styles for subgraphs
+    classDef subgraphNode fill:#E3F2FD,stroke:#1565C0,stroke-width:3px,color:#000
+    classDef startEnd fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
+    classDef stateNode fill:#FFD700,stroke:#F57F17,stroke-width:3px,color:#000
+
+    %% Nodes
+    START((START)):::startEnd
+    State[("Shared State<br/>━━━━━━━━━━<br/>stock_symbols<br/>raw_news<br/>papers<br/>investment_method<br/>results")]:::stateNode
+    END((END)):::startEnd
+    
+    %% Subgraph nodes
+    SN[StockNewsSubgraph]:::subgraphNode
+    IP[InvestmentPapersSubgraph]:::subgraphNode
+    CIM[CreateInvestmentMethodSubgraph]:::subgraphNode
+    EP[ExperimentPlanningSubgraph]:::subgraphNode
+    LE[LocalExecutionSubgraph]:::subgraphNode
+    RA[ResultsAnalysisSubgraph]:::subgraphNode
+    RW[ReportWriterSubgraph]:::subgraphNode
+    
+    %% Main flow
+    START --> SN
+    START --> IP
+    SN --> State
+    IP --> State
+    State --> CIM
+    CIM --> EP
+    EP --> LE
+    LE --> RA
+    RA --> RW
+    RW --> END
+    
+    %% State connections
+    CIM -.->|save method| State
+    RA -.->|read all data| State
+```
+
+## Detailed Subgraph Structures
+
+### 1. StockNewsSubgraph
+
+```mermaid
+graph TD
     classDef retrievalNode fill:#81C784,stroke:#388E3C,stroke-width:2px,color:#000
-    classDef creationNode fill:#64B5F6,stroke:#1976D2,stroke-width:2px,color:#000
-    classDef executionNode fill:#BA68C8,stroke:#7B1FA2,stroke-width:2px,color:#fff
-    classDef analysisNode fill:#FFB74D,stroke:#F57C00,stroke-width:2px,color:#000
-    classDef reportNode fill:#EF5350,stroke:#C62828,stroke-width:2px,color:#fff
-    classDef endNode fill:#424242,stroke:#212121,stroke-width:3px,color:#fff
-    classDef conditionalNode fill:#FFF59D,stroke:#F57F17,stroke-width:2px,color:#000
-
-    %% Start Node
-    START((START)):::startNode
-
-    %% Retrieval Nodes
-    START --> retrieve_news[retrieve_stock_news]:::retrievalNode
-    retrieve_news --> filter_news[filter_relevant_news]:::retrievalNode
-    filter_news --> summarize_news[summarize_news]:::retrievalNode
+    classDef processNode fill:#AED581,stroke:#689F38,stroke-width:2px,color:#000
+    classDef dataSource fill:#E8F5E9,stroke:#4CAF50,stroke-width:1px,color:#1B5E20
     
-    START --> search_papers[search_papers]:::retrievalNode
-    search_papers --> filter_papers[filter_papers]:::retrievalNode
-    filter_papers --> extract_methods[extract_methods]:::retrievalNode
-
-    %% Merge retrieval results
-    summarize_news --> merge_context{Merge Context}:::conditionalNode
-    extract_methods --> merge_context
-
-    %% Creation Nodes
-    merge_context --> analyze_context[analyze_context]:::creationNode
-    analyze_context --> generate_strategy[generate_strategy]:::creationNode
-    generate_strategy --> validate_method[validate_method]:::creationNode
-    
-    validate_method --> plan_experiments[plan_experiments]:::creationNode
-    plan_experiments --> design_backtest[design_backtest]:::creationNode
-    design_backtest --> set_parameters[set_parameters]:::creationNode
-
-    %% Execution Nodes
-    set_parameters --> generate_code[generate_code]:::executionNode
-    generate_code --> prepare_env[prepare_environment]:::executionNode
-    prepare_env --> run_backtest[run_backtest]:::executionNode
-
-    %% Analysis Nodes
-    run_backtest --> analyze_performance[analyze_performance]:::analysisNode
-    analyze_performance --> calculate_metrics[calculate_metrics]:::analysisNode
-    calculate_metrics --> identify_patterns[identify_patterns]:::analysisNode
-
-    %% Report Nodes
-    identify_patterns --> compile_results[compile_results]:::reportNode
-    compile_results --> generate_insights[generate_insights]:::reportNode
-    generate_insights --> create_report[create_report]:::reportNode
-
-    %% End Node
-    create_report --> END((END)):::endNode
-```
-
-### Subgraph Structure
-
-```mermaid
-graph TB
     subgraph "StockNewsSubgraph"
-        direction TB
-        SN_START((ENTRY)) --> SN1[retrieve_stock_news<br/>Yahoo Finance RSS]
-        SN1 --> SN2[filter_relevant_news<br/>Relevance Score > 7]
-        SN2 --> SN3[summarize_news<br/>OpenAI API]
-        SN3 --> SN_END((END))
-    end
-
-    subgraph "InvestmentPapersSubgraph"
-        direction TB
-        IP_START((ENTRY)) --> IP1[search_papers<br/>ArXiv API]
-        IP1 --> IP2[filter_papers<br/>Finance Keywords]
-        IP2 --> IP3[extract_methods<br/>Method Extraction]
-        IP3 --> IP_END((END))
-    end
-
-    subgraph "CreateInvestmentMethodSubgraph"
-        direction TB
-        CM_START((ENTRY)) --> CM1[analyze_context<br/>News + Papers]
-        CM1 --> CM2[generate_strategy<br/>OpenAI GPT-4]
-        CM2 --> CM3[validate_method<br/>Consistency Check]
-        CM3 --> CM_END((END))
-    end
-
-    subgraph "ExperimentPlanningSubgraph"
-        direction TB
-        EP_START((ENTRY)) --> EP1[plan_experiments<br/>Test Scenarios]
-        EP1 --> EP2[design_backtest<br/>Time Periods]
-        EP2 --> EP3[set_parameters<br/>Risk Limits]
-        EP3 --> EP_END((END))
-    end
-
-    subgraph "LocalExecutionSubgraph"
-        direction TB
-        LE_START((ENTRY)) --> LE1[generate_code<br/>Python Script]
-        LE1 --> LE2[prepare_environment<br/>Dependencies]
-        LE2 --> LE3[run_backtest<br/>Execute/Skip]
-        LE3 --> LE_END((END))
-    end
-
-    subgraph "ResultsAnalysisSubgraph"
-        direction TB
-        RA_START((ENTRY)) --> RA1[analyze_performance<br/>Metrics]
-        RA1 --> RA2[calculate_metrics<br/>Sharpe, Returns]
-        RA2 --> RA3[identify_patterns<br/>Insights]
-        RA3 --> RA_END((END))
-    end
-
-    subgraph "ReportWriterSubgraph"
-        direction TB
-        RW_START((ENTRY)) --> RW1[compile_results<br/>All Data]
-        RW1 --> RW2[generate_insights<br/>OpenAI Analysis]
-        RW2 --> RW3[create_report<br/>Final Document]
-        RW3 --> RW_END((END))
+        START1((ENTRY))
+        END1((END))
+        
+        %% Nodes
+        N1[retrieve_stock_news]:::retrievalNode
+        N2[filter_relevant_news]:::processNode
+        N3[summarize_news]:::processNode
+        
+        %% Data source
+        DS1[Yahoo Finance RSS<br/>❌ 404 Error]:::dataSource
+        
+        %% Flow
+        START1 --> N1
+        DS1 -.-> N1
+        N1 --> N2
+        N2 --> N3
+        N3 --> END1
+        
+        %% Node details
+        N1 -.-> |"Fetch RSS feeds<br/>for each symbol"| N1
+        N2 -.-> |"Relevance score > 7<br/>Filter by keywords"| N2
+        N3 -.-> |"OpenAI API<br/>Generate summary"| N3
     end
 ```
 
-### State Management
+### 2. InvestmentPapersSubgraph
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Initialize
+graph TD
+    classDef retrievalNode fill:#81C784,stroke:#388E3C,stroke-width:2px,color:#000
+    classDef processNode fill:#AED581,stroke:#689F38,stroke-width:2px,color:#000
+    classDef dataSource fill:#E8F5E9,stroke:#4CAF50,stroke-width:1px,color:#1B5E20
     
-    Initialize --> DataRetrieval: Start Pipeline
-    
-    state DataRetrieval {
-        [*] --> FetchNews
-        [*] --> FetchPapers
-        FetchNews --> ProcessNews
-        FetchPapers --> ProcessPapers
-        ProcessNews --> [*]
-        ProcessPapers --> [*]
-    }
-    
-    DataRetrieval --> StrategyCreation: Context Ready
-    
-    state StrategyCreation {
-        [*] --> AnalyzeData
-        AnalyzeData --> GenerateMethod
-        GenerateMethod --> PlanExperiment
-        PlanExperiment --> [*]
-    }
-    
-    StrategyCreation --> Execution: Strategy Ready
-    
-    state Execution {
-        [*] --> GenerateCode
-        GenerateCode --> PrepareEnv
-        PrepareEnv --> RunBacktest
-        RunBacktest --> [*]
-    }
-    
-    Execution --> Analysis: Results Available
-    
-    state Analysis {
-        [*] --> AnalyzeResults
-        AnalyzeResults --> CalculateMetrics
-        CalculateMetrics --> [*]
-    }
-    
-    Analysis --> Reporting: Analysis Complete
-    
-    state Reporting {
-        [*] --> CompileReport
-        CompileReport --> GenerateInsights
-        GenerateInsights --> FinalReport
-        FinalReport --> [*]
-    }
-    
-    Reporting --> [*]: Pipeline Complete
+    subgraph "InvestmentPapersSubgraph"
+        START2((ENTRY))
+        END2((END))
+        
+        %% Nodes
+        P1[search_papers]:::retrievalNode
+        P2[filter_papers]:::processNode
+        P3[extract_methods]:::processNode
+        
+        %% Data source
+        DS2[ArXiv API<br/>✅ Working]:::dataSource
+        
+        %% Flow
+        START2 --> P1
+        DS2 -.-> P1
+        P1 --> P2
+        P2 --> P3
+        P3 --> END2
+        
+        %% Node details
+        P1 -.-> |"Query: ML trading<br/>portfolio optimization<br/>quant finance"| P1
+        P2 -.-> |"Finance keywords<br/>q-fin categories"| P2
+        P3 -.-> |"Extract trading<br/>strategies"| P3
+    end
 ```
 
-### Data Flow
+### 3. CreateInvestmentMethodSubgraph
+
+```mermaid
+graph TD
+    classDef creationNode fill:#64B5F6,stroke:#1976D2,stroke-width:2px,color:#000
+    classDef aiNode fill:#90CAF9,stroke:#1565C0,stroke-width:2px,color:#000
+    classDef dataSource fill:#E3F2FD,stroke:#2196F3,stroke-width:1px,color:#0D47A1
+    
+    subgraph "CreateInvestmentMethodSubgraph"
+        START3((ENTRY))
+        END3((END))
+        
+        %% Nodes
+        C1[analyze_context]:::creationNode
+        C2[generate_strategy]:::aiNode
+        C3[validate_method]:::creationNode
+        
+        %% Data source
+        DS3[OpenAI API<br/>✅ GPT-4]:::dataSource
+        
+        %% Flow
+        START3 --> C1
+        C1 --> C2
+        DS3 -.-> C2
+        C2 --> C3
+        C3 --> END3
+        
+        %% Node details
+        C1 -.-> |"Analyze news<br/>+ papers"| C1
+        C2 -.-> |"Generate trading<br/>strategy"| C2
+        C3 -.-> |"Validate<br/>consistency"| C3
+    end
+```
+
+### 4. ExperimentPlanningSubgraph
+
+```mermaid
+graph TD
+    classDef planNode fill:#64B5F6,stroke:#1976D2,stroke-width:2px,color:#000
+    classDef paramNode fill:#90CAF9,stroke:#1565C0,stroke-width:2px,color:#000
+    
+    subgraph "ExperimentPlanningSubgraph"
+        START4((ENTRY))
+        END4((END))
+        
+        %% Nodes
+        E1[plan_experiments]:::planNode
+        E2[design_backtest]:::planNode
+        E3[set_parameters]:::paramNode
+        
+        %% Flow
+        START4 --> E1
+        E1 --> E2
+        E2 --> E3
+        E3 --> END4
+        
+        %% Node details
+        E1 -.-> |"Define test<br/>scenarios"| E1
+        E2 -.-> |"Time periods<br/>Data splits"| E2
+        E3 -.-> |"Risk limits<br/>Position sizes"| E3
+    end
+```
+
+### 5. LocalExecutionSubgraph
+
+```mermaid
+graph TD
+    classDef execNode fill:#BA68C8,stroke:#7B1FA2,stroke-width:2px,color:#fff
+    classDef codeNode fill:#CE93D8,stroke:#8E24AA,stroke-width:2px,color:#000
+    
+    subgraph "LocalExecutionSubgraph"
+        START5((ENTRY))
+        END5((END))
+        
+        %% Nodes
+        L1[generate_code]:::codeNode
+        L2[prepare_environment]:::execNode
+        L3[run_backtest]:::execNode
+        
+        %% Decision
+        D1{Execute?}
+        
+        %% Flow
+        START5 --> L1
+        L1 --> L2
+        L2 --> D1
+        D1 -->|Yes| L3
+        D1 -->|No| END5
+        L3 --> END5
+        
+        %% Node details
+        L1 -.-> |"Generate Python<br/>backtest code"| L1
+        L2 -.-> |"Setup dependencies<br/>Create venv"| L2
+        L3 -.-> |"Execute backtest<br/>or skip"| L3
+    end
+```
+
+### 6. ResultsAnalysisSubgraph
+
+```mermaid
+graph TD
+    classDef analysisNode fill:#FFB74D,stroke:#F57C00,stroke-width:2px,color:#000
+    classDef metricsNode fill:#FFCC80,stroke:#FF6F00,stroke-width:2px,color:#000
+    
+    subgraph "ResultsAnalysisSubgraph"
+        START6((ENTRY))
+        END6((END))
+        
+        %% Nodes
+        R1[analyze_performance]:::analysisNode
+        R2[calculate_metrics]:::metricsNode
+        R3[identify_patterns]:::analysisNode
+        
+        %% Flow
+        START6 --> R1
+        R1 --> R2
+        R2 --> R3
+        R3 --> END6
+        
+        %% Node details
+        R1 -.-> |"Performance<br/>analysis"| R1
+        R2 -.-> |"Sharpe ratio<br/>Max drawdown<br/>Returns"| R2
+        R3 -.-> |"Pattern<br/>recognition"| R3
+    end
+```
+
+### 7. ReportWriterSubgraph
+
+```mermaid
+graph TD
+    classDef reportNode fill:#EF5350,stroke:#C62828,stroke-width:2px,color:#fff
+    classDef outputNode fill:#FF8A80,stroke:#D32F2F,stroke-width:2px,color:#000
+    
+    subgraph "ReportWriterSubgraph"
+        START7((ENTRY))
+        END7((END))
+        
+        %% Nodes
+        W1[compile_results]:::reportNode
+        W2[generate_insights]:::reportNode
+        W3[create_report]:::outputNode
+        
+        %% Data source
+        DS4[OpenAI API<br/>✅ Analysis]:::dataSource
+        
+        %% Flow
+        START7 --> W1
+        W1 --> W2
+        DS4 -.-> W2
+        W2 --> W3
+        W3 --> END7
+        
+        %% Node details
+        W1 -.-> |"Gather all<br/>results"| W1
+        W2 -.-> |"AI insights<br/>generation"| W2
+        W3 -.-> |"Final report<br/>PDF/HTML"| W3
+    end
+```
+
+## Data Flow Summary
 
 ```mermaid
 graph LR
-    subgraph "Shared State"
-        STATE[("State<br/>- stock_symbols<br/>- raw_news<br/>- papers<br/>- investment_method<br/>- experiment_plan<br/>- backtest_code<br/>- results<br/>- analysis<br/>- report")]
+    subgraph "External Data Sources"
+        E1[Alpha Vantage API<br/>✅ Stock Prices]
+        E2[ArXiv API<br/>✅ Papers]
+        E3[Yahoo RSS<br/>❌ News]
+        E4[OpenAI API<br/>✅ AI]
     end
     
-    %% Data Sources
-    YahooRSS[Yahoo Finance RSS<br/>❌ 404 Error] -.->|news| STATE
-    ArXiv[ArXiv API<br/>✅ 6 papers] -->|papers| STATE
-    AlphaVantage[Alpha Vantage<br/>✅ Stock Prices] -->|prices| STATE
+    subgraph "Pipeline Processing"
+        P1[Data Retrieval]
+        P2[Strategy Creation]
+        P3[Execution]
+        P4[Analysis & Report]
+    end
     
-    %% Processing Nodes
-    STATE -->|read| N1[News Processing]
-    STATE -->|read| N2[Paper Analysis]
-    N1 -->|write| STATE
-    N2 -->|write| STATE
+    E1 --> P1
+    E2 --> P1
+    E3 -.-> P1
+    E4 --> P2
+    E4 --> P4
     
-    STATE -->|read| N3[Strategy Generation]
-    N3 -->|write| STATE
-    
-    STATE -->|read| N4[Backtest Planning]
-    N4 -->|write| STATE
-    
-    STATE -->|read| N5[Code Generation]
-    N5 -->|write| STATE
-    
-    STATE -->|read| N6[Results Analysis]
-    N6 -->|write| STATE
-    
-    STATE -->|read| N7[Report Writing]
-    N7 -->|write| STATE
+    P1 --> P2
+    P2 --> P3
+    P3 --> P4
 ```
 
-## Real Data Sources
+## Pipeline Status
 
-| Data Source | Status | Type | Description |
-|-------------|---------|------|-------------|
-| Alpha Vantage API | ✅ Working | Stock Prices | Real-time stock quotes for AAPL, NVDA, MSFT |
-| ArXiv API | ✅ Working | Academic Papers | 6+ papers on algorithmic trading and ML |
-| Yahoo Finance RSS | ❌ 404 Error | News | Needs alternative implementation |
-| OpenAI API | ✅ Working | AI Processing | Strategy generation and analysis |
-
-## Pipeline Output
-
-The pipeline produces:
-1. **Academic Papers** - Latest research on quantitative trading
-2. **Stock Data** - Real-time prices and volumes
-3. **Investment Strategy** - AI-generated trading method
-4. **Backtest Code** - Executable Python scripts
-5. **Analysis Report** - Comprehensive performance analysis
+| Subgraph | Status | Data Source | Output |
+|----------|---------|------------|---------|
+| StockNewsSubgraph | ⚠️ Needs Fix | Yahoo RSS (404) | News summaries |
+| InvestmentPapersSubgraph | ✅ Working | ArXiv API | 6+ papers |
+| CreateInvestmentMethodSubgraph | ✅ Working | OpenAI API | Trading strategy |
+| ExperimentPlanningSubgraph | ✅ Working | Internal logic | Backtest plan |
+| LocalExecutionSubgraph | ✅ Working | Python generation | Executable code |
+| ResultsAnalysisSubgraph | ✅ Working | Metrics calculation | Performance stats |
+| ReportWriterSubgraph | ✅ Working | OpenAI API | Final report |
 
 ## Key Features
 
-- **LangGraph Architecture** - State-based workflow management
-- **Real Data Only** - No mock or simulated data
-- **Modular Design** - Each subgraph handles specific tasks
-- **Error Resilience** - Continues despite individual failures
-- **Transparent Sources** - All data sources clearly labeled
-
-## Implementation Details
-
-- Built with Python and LangGraph
-- Uses standard libraries (urllib, xml.etree) for minimal dependencies
-- Implements proper error handling and rate limiting
-- Generates executable code for backtesting strategies
-
-## Test Results
-
-Latest test run (2025-07-29):
-- ✅ Retrieved 6 academic papers from ArXiv
-- ✅ Fetched real-time stock prices for 3 symbols
-- ❌ Yahoo Finance RSS returned 404 (needs fix)
-- ✅ Generated investment strategy (when OpenAI available)
+- **Hierarchical Structure**: Main graph shows subgraph connections, detailed views show internal nodes
+- **Real Data Sources**: All external data is real (no mocks)
+- **LangGraph Architecture**: State-based workflow with shared memory
+- **Error Resilience**: Pipeline continues despite individual failures
+- **Transparent Processing**: Each step clearly shows its data source and processing
 
 ---
 
-*This visualization represents the actual graph structure of AIRAS-Trade, showing nodes, edges, and data flow through the LangGraph-based pipeline.*
+*This visualization represents the complete hierarchical structure of AIRAS-Trade, from high-level subgraph connections down to individual processing nodes.*
