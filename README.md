@@ -1,4 +1,4 @@
-# TradeGraph - AIRAS-Trade Pipeline Visualization
+# TradeGraph
 
 This repository contains the hierarchical graph visualization of AIRAS-Trade, a stock investment research pipeline built with LangGraph.
 
