@@ -1,6 +1,6 @@
 # TradeGraph
 
-This repository contains the hierarchical graph visualization of AIRAS-Trade, a stock investment research pipeline built with LangGraph.
+This repository contains the hierarchical graph visualization of TadeGraph, a stock investment research pipeline built with LangGraph.
 
 ## Main Pipeline Graph (High-Level)
 
