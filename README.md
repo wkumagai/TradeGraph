@@ -1,6 +1,59 @@
 # TradeGraph
 
-This repository contains the hierarchical graph visualization of TadeGraph, a stock investment research pipeline built with LangGraph.
+TradeGraph is a stock investment research pipeline built with LangGraph that uses real data sources to analyze markets, generate trading strategies, and produce comprehensive investment reports.
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/wkumagai/TradeGraph.git
+cd TradeGraph
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up API keys in .env file
+OPENAI_API_KEY=your_key_here
+ALPHAVANTAGE_API_KEY=your_key_here
+
+# Run the complete pipeline
+python subgraphs/examples/run_complete_pipeline.py
+
+# Or run individual subgraphs
+python subgraphs/01_stock_news/examples/run_stock_news.py
+python subgraphs/02_investment_papers/examples/run_paper_search.py
+```
+
+## 📁 Project Structure
+
+```
+TradeGraph/
+├── src/tradegraph/          # Core implementation
+├── subgraphs/              # Modular pipeline components
+│   ├── 01_stock_news/      # News retrieval
+│   ├── 02_investment_papers/   # Academic paper search
+│   ├── 03_create_investment_method/  # Strategy generation
+│   ├── 04_experiment_planning/  # Backtest design
+│   ├── 05_local_execution/     # Code generation
+│   ├── 06_results_analysis/    # Performance analysis
+│   ├── 07_report_writer/       # Report generation
+│   └── examples/           # Pipeline examples
+├── requirements.txt        # Python dependencies
+└── README.md              # This file
+```
+
+## 🔗 Subgraph Documentation
+
+Each subgraph has its own documentation:
+- [Stock News](subgraphs/01_stock_news/README.md) - Market news retrieval
+- [Investment Papers](subgraphs/02_investment_papers/README.md) - ArXiv paper search
+- [Create Method](subgraphs/03_create_investment_method/README.md) - AI strategy generation
+- [Experiment Planning](subgraphs/04_experiment_planning/README.md) - Backtest configuration
+- [Local Execution](subgraphs/05_local_execution/README.md) - Code generation/execution
+- [Results Analysis](subgraphs/06_results_analysis/README.md) - Performance metrics
+- [Report Writer](subgraphs/07_report_writer/README.md) - Final report generation
+
+See [Architecture Documentation](subgraphs/ARCHITECTURE.md) for detailed system design.
 
 ## Main Pipeline Graph (High-Level)
 
